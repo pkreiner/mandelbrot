@@ -15,10 +15,36 @@ const black = [0, 0, 0]
 const white = [255, 255, 255]
 const red = [255, 0, 0];
 const blue = [0, 0, 255];
+const green = [0, 255, 0];
 const teal = [0, 255, 255];
+const hslBlack = [0, 0, 0];
+const hslWhite = [0, 0, 100];
+const hslRed = [0, 100, 50];
+const hslGreen = [120, 100, 50];
+const hslBlue = [240, 100, 50];
+const hslTeal = [180, 100, 50];
+
+function hslToRgb(hsl) {
+    [h, s, l] = hsl;
+    s /= 100;
+    l /= 100;
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n =>
+	  l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return [255 * f(0), 255 * f(8), 255 * f(4)];
+}
 
 function zipWith(f, arr1, arr2) {
     return arr1.map((element, index) => f(element, arr2[index]));
+}
+
+function colorPath(colors, u) {
+    n = colors.length - 1;
+    k = Math.floor((u * n) % n);
+    [prevColor, nextColor] = [colors[k], colors[k+1]];
+    v = (u - (k / n)) * n;
+    return spectrum(prevColor, nextColor, v);
 }
 
 function setPixel(imageData, x, y, r, g, b, a) {
@@ -56,7 +82,6 @@ region = [xMin, xMax, yMin, yMax];
 function drawMandelbrot(region) {
     max_iterations = 200;
     pixelArray = new Float64Array(totalPixels);
-    [k_min, k_max] = [max_iterations, 0];
     [u_min, u_max] = [1, 0];
     for (let i = 0; i < width; i++) {
 	for (let j = 0; j < height; j++) {
@@ -71,12 +96,9 @@ function drawMandelbrot(region) {
 		[x, y] = [newX, newY]
 		k += 1;
 	    } while (k < max_iterations - 1 && x2 + y2 < 4)
-	    // small # of iterations -> very outside the set = white
-	    // max # of iterations -> inside the set = black
 	    u = k / max_iterations;
 	    pixelArray[i + j * width] = u;
 	    [u_min, u_max] = [Math.min(u_min, u), Math.max(u_max, u)];
-	    [k_min, k_max] = [Math.min(k_min, k), Math.max(k_max, k)];
 	}
     }
     u_scaling= 1/ (u_max - u_min);
@@ -84,13 +106,19 @@ function drawMandelbrot(region) {
 	for (let j = 0; j < height; j++) {
 	    let u = pixelArray[i + j * width];
 	    let v = normalizeColors ? (u - u_min) * u_scaling : u
-	    color = spectrum(white, teal, v);
+	    v = 1 - v;
+	    // Now v is in [0, 1).
+	    color = spectrum(teal, white, v);
+	    // let color = hslToRgb(v * 180, 100, 100 * (1 - v));
+	    // let hslColor = colorPath([hslBlack, hslRed, hslGreen, hslBlue, hslWhite], v);
+	    // let hslColor = [120 * v, 100, 50];
+	    // let hslColor = colorPath([hslBlack, hslTeal, hslWhite], v);
+	    // let [r, g, b] = hslToRgb(hslColor);
 	    let [r, g, b] = color;
 	    setPixel(mainImageData, i, j, r, g, b, 255);
 	}
     }
     mainCtx.putImageData(mainImageData, 0, 0);
-    console.log(`k_min: ${k_min}, k_max: ${k_max}`);
 }
 
 function drawRectOutline(ctx, topLeft, lowerRight) {
@@ -127,6 +155,7 @@ function drawInstructions() {
 
 let isDragging = false;
 let dragStart = null;
+let dragEnd = null;
 document.getElementById('canvasContainer').addEventListener('mousedown', (event) => {
     isDragging = true;
     dragStart = correctForCanvasOffset([event.clientX, event.clientY]);
@@ -134,22 +163,32 @@ document.getElementById('canvasContainer').addEventListener('mousedown', (event)
 });
 document.getElementById('canvasContainer').addEventListener('mouseup', (event) => {
     isDragging = false;
-    dragEnd = correctForCanvasOffset([event.clientX, event.clientY]);
-    console.log('dragged from ', dragStart, ' to ', dragEnd);
-    [i1, j1] = dragStart;
-    [x1, y1] = ijtoxy(i1, j1, region);
-    [i2, j2] = dragEnd;
-    [x2, y2] = ijtoxy(i2, j2, region);
-    newRegion = [x1, x2, y1, y2];
-    updateRegionAndRedraw(newRegion);
-    console.log('New Region: x: [', x1, ', ', x2, '], y: [', y1, ', ', y2, ']');
-    sndCtx.clearRect(0, 0, width, height);
+    // relying on 'dragEnd' to have been updated in the mousemove listener
+    if (dragEnd !== null && dragStart[0] != dragEnd[0] && dragStart[1] != dragEnd[1]) {
+	console.log('dragged from ', dragStart, ' to ', dragEnd);
+	[i1, j1] = dragStart;
+	[x1, y1] = ijtoxy(i1, j1, region);
+	[i2, j2] = dragEnd;
+	[x2, y2] = ijtoxy(i2, j2, region);
+	newRegion = [x1, x2, y1, y2];
+	updateRegionAndRedraw(newRegion);
+	console.log('New Region: x: [', x1, ', ', x2, '], y: [', y1, ', ', y2, ']');
+	sndCtx.clearRect(0, 0, width, height);	
+    }
+    
 });
 document.getElementById('canvasContainer').addEventListener('mousemove', (event) => {
     if (isDragging) {
-	currentPos = correctForCanvasOffset([event.clientX, event.clientY]);
+	mousePos = correctForCanvasOffset([event.clientX, event.clientY]);
+	// Restrict the selection region to be square, by using the shorter side of its rectangle
+	[xDelta, yDelta] = [mousePos[0] - dragStart[0], mousePos[1] - dragStart[1]];
+	if (Math.abs(xDelta) < Math.abs(yDelta)) {
+	    dragEnd = [mousePos[0], dragStart[1] + Math.sign(yDelta) * Math.abs(xDelta)];
+	} else {
+	    dragEnd = [dragStart[0] + Math.sign(xDelta) * Math.abs(yDelta), mousePos[1]];
+	}
 	sndCtx.clearRect(0, 0, width, height);
-	drawRectOutline(sndCtx, dragStart, currentPos);
+	drawRectOutline(sndCtx, dragStart, dragEnd);
     }
 });
 
