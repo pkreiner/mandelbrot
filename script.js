@@ -9,9 +9,14 @@ const sndImageData = sndCtx.createImageData(width, height);
 
 const threshold = 10**6
 const threshold2 = threshold**2
+const totalPixels = width * height;
+const normalizeColors = true;
 
+const black = [0, 0, 0]
+const white = [255, 255, 255]
 const red = [255, 0, 0];
 const blue = [0, 0, 255];
+const teal = [0, 255, 255];
 
 function zipWith(f, arr1, arr2) {
     return arr1.map((element, index) => f(element, arr2[index]));
@@ -51,7 +56,10 @@ function ijtoxy(i, j, region) {
 region = [xMin, xMax, yMin, yMax];
 function drawMandelbrot(region) {
     max_iterations = 200;
-    for(let i = 0; i < width; i++) {
+    pixelArray = new Float64Array(totalPixels);
+    [k_min, k_max] = [max_iterations, 0];
+    [u_min, u_max] = [1, 0];
+    for (let i = 0; i < width; i++) {
 	for (let j = 0; j < height; j++) {
 	    [x, y] = ijtoxy(i, j, region);
 	    let [cx, cy] = [x, y];
@@ -67,12 +75,23 @@ function drawMandelbrot(region) {
 	    // small # of iterations -> very outside the set = white
 	    // max # of iterations -> inside the set = black
 	    u = k / max_iterations;
-	    color = spectrum(blue, red, u);
+	    pixelArray[i + j * width] = u;
+	    [u_min, u_max] = [Math.min(u_min, u), Math.max(u_max, u)];
+	    [k_min, k_max] = [Math.min(k_min, k), Math.max(k_max, k)];
+	    
+	}
+    }
+    u_scaling= 1/ (u_max - u_min);
+    for (let i = 0; i < width; i++) {
+	for (let j = 0; j < height; j++) {
+	    v = (pixelArray[i + j * width] - u_min) * u_scaling;
+	    color = spectrum(white, teal, v);
 	    let [r, g, b] = color;
 	    setPixel(mainImageData, i, j, r, g, b, 255);
 	}
     }
     mainCtx.putImageData(mainImageData, 0, 0);
+    console.log(`k_min: ${k_min}, k_max: ${k_max}`);
 }
 drawMandelbrot(region);
 
