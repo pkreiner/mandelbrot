@@ -5,9 +5,17 @@
     <title>Mandelbrot Set</title>
   </head>
   <body>
-    <div id='canvasContainer'>
-      <canvas id='mandelbrotCanvas' width='800' height='800'></canvas>
-      <canvas id='rectangleCanvas' width='800' height='800'></canvas>
+    <div class='container'>
+      <div id='canvasContainer'>
+	<canvas id='mandelbrotCanvas' width='800' height='800'></canvas>
+	<canvas id='rectangleCanvas' width='800' height='800'></canvas>
+      </div>
+      <div class='controls'>
+	<label>
+	  <input type='checkbox' id='dynamicColoringCheckbox' checked>
+	  Enable dynamic coloring
+	</label>
+      </div>
     </div>
     <script src='script.js'></script>
   </body>

@@ -5,12 +5,11 @@ const sndCtx = secondCanvas.getContext('2d');
 const mainImageData = mainCtx.createImageData(mainCanvas.width, mainCanvas.height);
 const width = mainImageData.width;
 const height = mainImageData.height;
+const totalPixels = width * height;
 const sndImageData = sndCtx.createImageData(width, height);
 
-const threshold = 10**6
-const threshold2 = threshold**2
-const totalPixels = width * height;
-const normalizeColors = true;
+// Options
+let normalizeColors = true;
 
 const black = [0, 0, 0]
 const white = [255, 255, 255]
@@ -83,7 +82,8 @@ function drawMandelbrot(region) {
     u_scaling= 1/ (u_max - u_min);
     for (let i = 0; i < width; i++) {
 	for (let j = 0; j < height; j++) {
-	    v = (pixelArray[i + j * width] - u_min) * u_scaling;
+	    let u = pixelArray[i + j * width];
+	    let v = normalizeColors ? (u - u_min) * u_scaling : u
 	    color = spectrum(white, teal, v);
 	    let [r, g, b] = color;
 	    setPixel(mainImageData, i, j, r, g, b, 255);
@@ -92,7 +92,6 @@ function drawMandelbrot(region) {
     mainCtx.putImageData(mainImageData, 0, 0);
     console.log(`k_min: ${k_min}, k_max: ${k_max}`);
 }
-drawMandelbrot(region);
 
 function drawRectOutline(ctx, topLeft, lowerRight) {
     [x1, y1] = topLeft;
@@ -119,6 +118,11 @@ function correctForCanvasOffset(point) {
     let rect = mainCanvas.getBoundingClientRect();
     [i, j] = point;
     return [Math.round(i - rect.left), Math.round(j - rect.top)];
+}
+
+function drawInstructions() {
+    mainCtx.font = '20px Arial';
+    mainCtx.fillText('(Zoom in by selecting a region)', 20, 20);
 }
 
 let isDragging = false;
@@ -148,3 +152,16 @@ document.getElementById('canvasContainer').addEventListener('mousemove', (event)
 	drawRectOutline(sndCtx, dragStart, currentPos);
     }
 });
+
+document.getElementById('dynamicColoringCheckbox').addEventListener('change', (event) => {
+    if (event.target.checked) {
+	normalizeColors = true;
+	drawMandelbrot(region);
+    } else {
+	normalizeColors = false;
+	drawMandelbrot(region);
+    }
+});
+
+drawMandelbrot(region);
+drawInstructions();
