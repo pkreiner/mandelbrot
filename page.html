@@ -2,6 +2,7 @@
 <html>
   <head>
     <link rel='stylesheet' href='style.css'></link>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.css"/>
     <title>Mandelbrot Set</title>
   </head>
   <body>
@@ -12,11 +13,23 @@
       </div>
       <div class='controls'>
 	<label>
-	  <input type='checkbox' id='dynamicColoringCheckbox' checked>
+	  <input type='checkbox' id='normalizeColorsCheckbox'>
 	  Normalize coloring to current window
 	</label>
+	<div class='dropdownContainer'>
+	  <select id='colorSchemeSelector'>
+	    <option value='blackToWhite'>Black to White</option>
+	    <option value='tealToWhite'>Teal to White</option>
+	    <option value='custom'>Custom</option>
+	  </select>
+	  <label for='colorSchemeSelector'>Color scheme</label>
+	</div>
+	<input type="text" data-coloris id='color-input-1' style='display: none'>
+	<input type="text" data-coloris id='color-input-2' style='display: none'>
       </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.js"></script>
+    <script src='auxilliary_functions.js'></script>
     <script src='script.js'></script>
   </body>
 </html>

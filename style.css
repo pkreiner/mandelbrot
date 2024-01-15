@@ -12,14 +12,28 @@
     margin-left: 20px;
 }
 
+.controls > * {
+    margin-bottom: 10px;
+}
+
 .controls label {
     display: flex;
     align-items: center;
-    margin-bottom: 5px;
 }
 
 .controls input {
     margin-right: 10px;
+}
+
+.controls .dropdownContainer {
+    display: flex;
+    align-items: bottom;
+    gap: 15px;
+}
+
+.controls label, .controls select {
+    display: inline-block;
+    vertical-align: middle;
 }
 
 #canvasContainer {

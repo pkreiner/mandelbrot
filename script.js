@@ -8,8 +8,7 @@ const height = mainImageData.height;
 const totalPixels = width * height;
 const sndImageData = sndCtx.createImageData(width, height);
 
-// Options
-let normalizeColors = true;
+
 
 const black = [0, 0, 0]
 const white = [255, 255, 255]
@@ -24,28 +23,18 @@ const hslGreen = [120, 100, 50];
 const hslBlue = [240, 100, 50];
 const hslTeal = [180, 100, 50];
 
-function hslToRgb(hsl) {
-    [h, s, l] = hsl;
-    s /= 100;
-    l /= 100;
-    const k = n => (n + h / 30) % 12;
-    const a = s * Math.min(l, 1 - l);
-    const f = n =>
-	  l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-    return [255 * f(0), 255 * f(8), 255 * f(4)];
+const tealToWhite = (u) => interpolate(teal, white, u);
+const blackToWhite = (u) => interpolate(black, white, u);
+
+const colorSchemes = {
+    'tealToWhite' : tealToWhite,
+    'blackToWhite' : blackToWhite
 }
 
-function zipWith(f, arr1, arr2) {
-    return arr1.map((element, index) => f(element, arr2[index]));
-}
+// Options
+let normalizeColors = true;
+let colorScheme = blackToWhite;
 
-function colorPath(colors, u) {
-    n = colors.length - 1;
-    k = Math.floor((u * n) % n);
-    [prevColor, nextColor] = [colors[k], colors[k+1]];
-    v = (u - (k / n)) * n;
-    return spectrum(prevColor, nextColor, v);
-}
 
 function setPixel(imageData, x, y, r, g, b, a) {
     var index = (x + y * width) * 4;
@@ -55,14 +44,17 @@ function setPixel(imageData, x, y, r, g, b, a) {
     imageData.data[index+3] = a;
 }
 
-// Turns a u in [0, 1) to a [r, g, b] gray color
-function grey(u) {
-    v = Math.floor(u * 256);
-    return [v, v, v];
-}
 // Turns a u in [0, 1] to a color between color1 and color2
-function spectrum(color1, color2, u) {
+function interpolate(color1, color2, u) {
     return zipWith((c1, c2) => Math.floor((1 - u) * c1 + u * c2), color1, color2);
+}
+
+function interpolatePath(colors, u) {
+    n = colors.length - 1;
+    k = Math.floor((u * n) % n);
+    [prevColor, nextColor] = [colors[k], colors[k+1]];
+    v = (u - (k / n)) * n;
+    return interpolate(prevColor, nextColor, v);
 }
 
 function ijtoxy(i, j, region) {
@@ -79,9 +71,11 @@ function ijtoxy(i, j, region) {
 [xMin, xMax] = [-2.5, 0.5];
 [yMin, yMax] = [-1.5, 1.5];
 region = [xMin, xMax, yMin, yMax];
-function drawMandelbrot(region) {
+pixelArray = new Float64Array(totalPixels);
+function calculateMandelbrot(region) {
+    // This function populates the 'pixelArray' with values in [0, 1).
+    // 0 means inside the mandelbrot set, 1 means outside.
     max_iterations = 200;
-    pixelArray = new Float64Array(totalPixels);
     [u_min, u_max] = [1, 0];
     for (let i = 0; i < width; i++) {
 	for (let j = 0; j < height; j++) {
@@ -96,24 +90,39 @@ function drawMandelbrot(region) {
 		[x, y] = [newX, newY]
 		k += 1;
 	    } while (k < max_iterations - 1 && x2 + y2 < 4)
-	    u = k / max_iterations;
+	    u = 1 - (k / max_iterations);
 	    pixelArray[i + j * width] = u;
-	    [u_min, u_max] = [Math.min(u_min, u), Math.max(u_max, u)];
 	}
+    }    
+}
+
+function drawPixelArray() {
+    // colorScheme is a function [0, 1) -> [r, g, b].
+    let u_min = 1, u_max = 0, u_scaling;
+    if (normalizeColors) {
+	[u_min, u_max] = [1, 0];
+	for (let i = 0; i < width; i++) {
+	    for (let j = 0; j < height; j++) {
+		let u = pixelArray[i + j * width];
+		[u_min, u_max] = [Math.min(u_min, u), Math.max(u_max, u)];
+		if (u_min > u_max) {
+		}
+	    }
+	}
+	u_scaling = 1 / (u_max - u_min);
     }
-    u_scaling= 1/ (u_max - u_min);
     for (let i = 0; i < width; i++) {
 	for (let j = 0; j < height; j++) {
 	    let u = pixelArray[i + j * width];
-	    let v = normalizeColors ? (u - u_min) * u_scaling : u
-	    v = 1 - v;
-	    // Now v is in [0, 1).
-	    color = spectrum(teal, white, v);
-	    // let color = hslToRgb(v * 180, 100, 100 * (1 - v));
-	    // let hslColor = colorPath([hslBlack, hslRed, hslGreen, hslBlue, hslWhite], v);
-	    // let hslColor = [120 * v, 100, 50];
-	    // let hslColor = colorPath([hslBlack, hslTeal, hslWhite], v);
-	    // let [r, g, b] = hslToRgb(hslColor);
+	    let v;
+	    if (normalizeColors) {
+		v = (u - u_min) * u_scaling;
+	    } else {
+		v = u;
+	    }
+	    if (Math.random() < 0.0001) {
+	    }
+	    let color = colorScheme(v);
 	    let [r, g, b] = color;
 	    setPixel(mainImageData, i, j, r, g, b, 255);
 	}
@@ -137,7 +146,8 @@ function drawRectOutline(ctx, topLeft, lowerRight) {
 
 function updateRegionAndRedraw(newRegion) {
     region = newRegion;
-    drawMandelbrot(region);
+    calculateMandelbrot(region);
+    drawPixelArray();
 }
 
 // Turns an (i, j) pixel coordinate pair relative to the viewport,
@@ -153,9 +163,20 @@ function drawInstructions() {
     mainCtx.fillText('(Zoom in by selecting a region)', 20, 20);
 }
 
+
 let isDragging = false;
 let dragStart = null;
 let dragEnd = null;
+
+window.onload = function() {
+    const normalizeColorsCheckbox = document.getElementById('normalizeColorsCheckbox');
+    normalizeColorsCheckbox.checked = normalizeColors;
+
+    calculateMandelbrot(region);    
+    drawPixelArray();
+    drawInstructions();    
+}
+
 document.getElementById('canvasContainer').addEventListener('mousedown', (event) => {
     isDragging = true;
     dragStart = correctForCanvasOffset([event.clientX, event.clientY]);
@@ -192,15 +213,30 @@ document.getElementById('canvasContainer').addEventListener('mousemove', (event)
     }
 });
 
-document.getElementById('dynamicColoringCheckbox').addEventListener('change', (event) => {
+document.getElementById('normalizeColorsCheckbox').addEventListener('change', (event) => {
     if (event.target.checked) {
 	normalizeColors = true;
-	drawMandelbrot(region);
+	drawPixelArray();
     } else {
 	normalizeColors = false;
-	drawMandelbrot(region);
+	drawPixelArray();
     }
 });
 
-drawMandelbrot(region);
-drawInstructions();
+let numCustomColors = 2;
+document.getElementById('colorSchemeSelector').addEventListener('change', (event) => {
+    value = event.target.value;
+    if (value == 'custom') {
+	for (let i=1; i <= numCustomColors; i++) {
+	    selector = document.getElementById(`color-input-${i}`);
+	    selector.style.display = 'block';
+	}
+    } else {
+	for (let i=1; i <= numCustomColors; i++) {
+	    selector = document.getElementById(`color-input-${i}`);
+	    selector.style.display = 'none';
+	}
+	colorScheme = colorSchemes[event.target.value];
+	drawPixelArray();
+    }
+});
