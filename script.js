@@ -78,7 +78,6 @@ function drawMandelbrot(region) {
 	    pixelArray[i + j * width] = u;
 	    [u_min, u_max] = [Math.min(u_min, u), Math.max(u_max, u)];
 	    [k_min, k_max] = [Math.min(k_min, k), Math.max(k_max, k)];
-	    
 	}
     }
     u_scaling= 1/ (u_max - u_min);
@@ -114,15 +113,24 @@ function updateRegionAndRedraw(newRegion) {
     drawMandelbrot(region);
 }
 
+// Turns an (i, j) pixel coordinate pair relative to the viewport,
+// to one relative to the canvas.
+function correctForCanvasOffset(point) {
+    let rect = mainCanvas.getBoundingClientRect();
+    [i, j] = point;
+    return [Math.round(i - rect.left), Math.round(j - rect.top)];
+}
+
 let isDragging = false;
 let dragStart = null;
 document.getElementById('canvasContainer').addEventListener('mousedown', (event) => {
     isDragging = true;
-    dragStart = [event.clientX, event.clientY];
+    dragStart = correctForCanvasOffset([event.clientX, event.clientY]);
+    console.log(`mouse down at (${event.clientX}, ${event.clientY})`);
 });
 document.getElementById('canvasContainer').addEventListener('mouseup', (event) => {
     isDragging = false;
-    dragEnd = [event.clientX, event.clientY];
+    dragEnd = correctForCanvasOffset([event.clientX, event.clientY]);
     console.log('dragged from ', dragStart, ' to ', dragEnd);
     [i1, j1] = dragStart;
     [x1, y1] = ijtoxy(i1, j1, region);
@@ -135,7 +143,7 @@ document.getElementById('canvasContainer').addEventListener('mouseup', (event) =
 });
 document.getElementById('canvasContainer').addEventListener('mousemove', (event) => {
     if (isDragging) {
-	currentPos = [event.clientX, event.clientY];
+	currentPos = correctForCanvasOffset([event.clientX, event.clientY]);
 	sndCtx.clearRect(0, 0, width, height);
 	drawRectOutline(sndCtx, dragStart, currentPos);
     }
