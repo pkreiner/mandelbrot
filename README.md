@@ -1,0 +1,1 @@
+Simple zoomable mandelbrot set viewer
