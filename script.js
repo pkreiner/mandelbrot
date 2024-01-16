@@ -77,6 +77,7 @@ function ijtoxy(i, j, region) {
 [xMin, xMax] = [-2.5, 0.5];
 [yMin, yMax] = [-1.5, 1.5];
 region = [xMin, xMax, yMin, yMax];
+regions = [region];
 pixelArray = new Float64Array(totalPixels);
 function calculateMandelbrot(region) {
     // This function populates the 'pixelArray' with values in [0, 1).
@@ -137,7 +138,24 @@ function drawPixelArray() {
 }
 
 function updateRegionAndRedraw(newRegion) {
+    regions = regions.concat([newRegion]);
     region = newRegion;
+    calculateMandelbrot(region);
+    drawPixelArray();
+}
+
+function goUpOneRegion() {
+    if (regions.length > 1) {
+	regions = regions.slice(0, -1);
+	region = regions[regions.length - 1];
+	calculateMandelbrot(region);
+	drawPixelArray();
+    }
+}
+
+function resetRegion() {
+    region = regions[0];
+    regions = [region];
     calculateMandelbrot(region);
     drawPixelArray();
 }
@@ -253,7 +271,6 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
 	drawPixelArray();
     }
 });
-
 // Put event listeners on the starting two custom color selectors
 for (let i = 0; i < 2; i++) {
     document.getElementById(`color-input-${i}`).addEventListener('change', (event) => {
@@ -267,7 +284,6 @@ for (let i = 0; i < 2; i++) {
 	}
     });
 }
-
 document.getElementById('interpolateHslCheckbox').addEventListener('change', (event) => {
     interpolateInHsl = event.target.checked;
     if (validCustomColors()) {
@@ -275,3 +291,5 @@ document.getElementById('interpolateHslCheckbox').addEventListener('change', (ev
 	drawPixelArray();
     }
 });
+document.getElementById('upOneRegionButton').addEventListener('click', goUpOneRegion);
+document.getElementById('resetRegionButton').addEventListener('click', resetRegion);
