@@ -1,6 +1,19 @@
-.container {
+.pageContainer {
     display: flex;
     align-items: start;
+}
+
+#canvasContainer {
+    position: relative;
+    min-width: 800px;
+    width: 800px;
+    height: 800px;
+}
+
+canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
 }
 
 .controls {
@@ -31,21 +44,3 @@
     gap: 15px;
 }
 
-.controls label, .controls select {
-    display: inline-block;
-    vertical-align: middle;
-}
-
-#canvasContainer {
-    position: relative;
-    width: 800px;
-    height: 800px;
-    /* padding-right: 20px; */
-    /* border-right: 1px solid black; */
-}
-
-canvas {
-    position: absolute;
-    left: 0;
-    top: 0;
-}

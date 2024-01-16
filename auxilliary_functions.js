@@ -30,6 +30,13 @@ function rgbToHsl(rgb) {
     ];
 };
 
+function hexToRgb(hex) {
+    let r = parseInt(hex.substring(1, 3), 16);
+    let g = parseInt(hex.substring(3, 5), 16);
+    let b = parseInt(hex.substring(5, 7), 16);
+    return [r, g, b];
+}
+
 function zipWith(f, arr1, arr2) {
     return arr1.map((element, index) => f(element, arr2[index]));
 }

@@ -34,7 +34,7 @@ const colorSchemes = {
 // Options
 let normalizeColors = true;
 let colorScheme = blackToWhite;
-
+let interpolateInHsl = false;
 
 function setPixel(imageData, x, y, r, g, b, a) {
     var index = (x + y * width) * 4;
@@ -55,6 +55,12 @@ function interpolatePath(colors, u) {
     [prevColor, nextColor] = [colors[k], colors[k+1]];
     v = (u - (k / n)) * n;
     return interpolate(prevColor, nextColor, v);
+}
+
+function interpolatePathHsl(rgbColors, u) {
+    // Accepts and returns rgb colors, but interpolates in hsl space
+    hslColors = rgbColors.map(rgbToHsl);
+    return hslToRgb(interpolatePath(hslColors, u));
 }
 
 function ijtoxy(i, j, region) {
@@ -223,20 +229,63 @@ document.getElementById('normalizeColorsCheckbox').addEventListener('change', (e
     }
 });
 
+function setCustomColorScheme() {
+    if (interpolateInHsl) {
+	colorScheme = (u) => interpolatePathHsl(customColors, u);
+    } else {
+	colorScheme = (u) => interpolatePath(customColors, u);
+    }
+}
+
+function validCustomColors() {
+    return customColors.every(element => element != undefined);
+}
+
 let numCustomColors = 2;
+let customColors = [undefined, undefined];
 document.getElementById('colorSchemeSelector').addEventListener('change', (event) => {
     value = event.target.value;
     if (value == 'custom') {
-	for (let i=1; i <= numCustomColors; i++) {
+	for (let i=0; i < numCustomColors; i++) {
 	    selector = document.getElementById(`color-input-${i}`);
 	    selector.style.display = 'block';
 	}
+	document.getElementById('interpolateHslLabel').style.display = 'flex';
+	document.getElementById('interpolateHslCheckbox').style.display = 'flex';
+	if (validCustomColors()) {
+	    setCustomColorScheme();
+	    drawPixelArray();
+	}
     } else {
-	for (let i=1; i <= numCustomColors; i++) {
+	for (let i=0; i < numCustomColors; i++) {
 	    selector = document.getElementById(`color-input-${i}`);
 	    selector.style.display = 'none';
 	}
+	document.getElementById('interpolateHslLabel').style.display = 'none';
+	document.getElementById('interpolateHslCheckbox').style.display = 'none';
 	colorScheme = colorSchemes[event.target.value];
+	drawPixelArray();
+    }
+});
+
+// Put event listeners on the starting two custom color selectors
+for (let i = 0; i < 2; i++) {
+    document.getElementById(`color-input-${i}`).addEventListener('change', (event) => {
+	value = event.target.value;
+	customColors[i] = hexToRgb(value);
+	console.log(customColors[i]);
+	console.log(customColors);
+	if (validCustomColors()) {
+	    setCustomColorScheme();
+	    drawPixelArray();
+	}
+    });
+}
+
+document.getElementById('interpolateHslCheckbox').addEventListener('change', (event) => {
+    interpolateInHsl = event.target.checked;
+    if (validCustomColors()) {
+	setCustomColorScheme();
 	drawPixelArray();
     }
 });

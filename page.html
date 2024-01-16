@@ -2,11 +2,11 @@
 <html>
   <head>
     <link rel='stylesheet' href='style.css'></link>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.css"/>
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.css'/>
     <title>Mandelbrot Set</title>
   </head>
   <body>
-    <div class='container'>
+    <div class='pageContainer'>
       <div id='canvasContainer'>
 	<canvas id='mandelbrotCanvas' width='800' height='800'></canvas>
 	<canvas id='rectangleCanvas' width='800' height='800'></canvas>
@@ -24,11 +24,15 @@
 	  </select>
 	  <label for='colorSchemeSelector'>Color scheme</label>
 	</div>
-	<input type="text" data-coloris id='color-input-1' style='display: none'>
-	<input type="text" data-coloris id='color-input-2' style='display: none'>
+	<input type='text' data-coloris id='color-input-0' style='display: none'>
+	<input type='text' data-coloris id='color-input-1' style='display: none'>
+	<label id='interpolateHslLabel' style='display: none'>
+	  <input type='checkbox' id='interpolateHslCheckbox' style='display: none'>
+	  Interpolate colors in HSL (hue, saturation, lightness) space instead of RGB
+	</label>
       </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.js"></script>
+    <script src='https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.js'></script>
     <script src='auxilliary_functions.js'></script>
     <script src='script.js'></script>
   </body>
