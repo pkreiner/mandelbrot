@@ -136,20 +136,6 @@ function drawPixelArray() {
     mainCtx.putImageData(mainImageData, 0, 0);
 }
 
-function drawRectOutline(ctx, topLeft, lowerRight) {
-    [x1, y1] = topLeft;
-    [x2, y2] = lowerRight;
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1, y2);
-    ctx.lineTo(x2, y2);
-    ctx.lineTo(x2, y1);
-    ctx.lineTo(x1, y1);
-    ctx.strokeStyle = 'gray';
-    ctx.strokeWidth = 5;
-    ctx.stroke();
-}
-
 function updateRegionAndRedraw(newRegion) {
     region = newRegion;
     calculateMandelbrot(region);
