@@ -12,6 +12,7 @@
 	<canvas id='rectangleCanvas' width='800' height='800'></canvas>
       </div>
       <div class='controls'>
+	<h3>Options</h3>
 	<label>
 	  <input type='checkbox' id='normalizeColorsCheckbox'>
 	  Normalize coloring to current window
@@ -30,6 +31,12 @@
 	  <input type='checkbox' id='interpolateHslCheckbox' style='display: none'>
 	  Interpolate colors in HSL (hue, saturation, lightness) space instead of RGB
 	</label>
+	<label>
+	  <input type='text' id='maxIterationsField'>
+	  Maximum iterations (increase to add resolution near the outside of the set).
+	</label>
+	<button id='upOneRegionButton'>Zoom out one jump</button>
+	<button id='resetRegionButton'>Zoom back out to the start</button>
       </div>
     </div>
     <script src='https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.js'></script>
