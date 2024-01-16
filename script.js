@@ -40,6 +40,8 @@ let optionsHidden = false;
 let usingWebWorkers = true;
 let numWebWorkers = navigator.hardwareConcurrency;
 
+let isFirstDraw = true;
+
 function setPixel(imageData, x, y, r, g, b, a) {
     var index = (x + y * width) * 4;
     imageData.data[index+0] = r;
@@ -179,6 +181,10 @@ function drawPixelArray() {
 	}
     }
     mainCtx.putImageData(mainImageData, 0, 0);
+    if (isFirstDraw) {
+	drawInstructions();
+	isFirstDraw = false;
+    }
 }
 
 function updateRegionAndRedraw(newRegion) {
@@ -229,7 +235,6 @@ window.onload = function() {
     document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'none');
     
     calculateAndDrawPixelArray();    
-    drawInstructions();
 }
 
 document.getElementById('canvasContainer').addEventListener('mousedown', (event) => {
