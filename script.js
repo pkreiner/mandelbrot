@@ -35,6 +35,7 @@ const colorSchemes = {
 let normalizeColors = true;
 let colorScheme = blackToWhite;
 let interpolateInHsl = false;
+let maxIterations = 200;
 
 function setPixel(imageData, x, y, r, g, b, a) {
     var index = (x + y * width) * 4;
@@ -79,11 +80,10 @@ function ijtoxy(i, j, region) {
 region = [xMin, xMax, yMin, yMax];
 regions = [region];
 pixelArray = new Float64Array(totalPixels);
-function calculateMandelbrot(region) {
+function calculateMandelbrot() {
+    time = performance.now()
     // This function populates the 'pixelArray' with values in [0, 1).
     // 0 means inside the mandelbrot set, 1 means outside.
-    max_iterations = 200;
-    [u_min, u_max] = [1, 0];
     for (let i = 0; i < width; i++) {
 	for (let j = 0; j < height; j++) {
 	    [x, y] = ijtoxy(i, j, region);
@@ -96,11 +96,12 @@ function calculateMandelbrot(region) {
 		newY = (2 * x * y) + cy;
 		[x, y] = [newX, newY]
 		k += 1;
-	    } while (k < max_iterations - 1 && x2 + y2 < 4)
-	    u = 1 - (k / max_iterations);
+	    } while (k < maxIterations - 1 && x2 + y2 < 4)
+	    u = 1 - (k / maxIterations);
 	    pixelArray[i + j * width] = u;
 	}
-    }    
+    }
+    console.log(`mandelbrot calculation time in ms: ${performance.now() - time}`);
 }
 
 function drawPixelArray() {
@@ -140,7 +141,7 @@ function drawPixelArray() {
 function updateRegionAndRedraw(newRegion) {
     regions = regions.concat([newRegion]);
     region = newRegion;
-    calculateMandelbrot(region);
+    calculateMandelbrot();
     drawPixelArray();
 }
 
@@ -148,7 +149,7 @@ function goUpOneRegion() {
     if (regions.length > 1) {
 	regions = regions.slice(0, -1);
 	region = regions[regions.length - 1];
-	calculateMandelbrot(region);
+	calculateMandelbrot();
 	drawPixelArray();
     }
 }
@@ -156,7 +157,7 @@ function goUpOneRegion() {
 function resetRegion() {
     region = regions[0];
     regions = [region];
-    calculateMandelbrot(region);
+    calculateMandelbrot();
     drawPixelArray();
 }
 
@@ -182,31 +183,32 @@ window.onload = function() {
     const normalizeColorsCheckbox = document.getElementById('normalizeColorsCheckbox');
     normalizeColorsCheckbox.checked = normalizeColors;
 
-    calculateMandelbrot(region);    
+    document.getElementById('maxIterationsField').value = maxIterations;
+    
+    // hide the extra divs that coloris puts in the DOM for the custom color pickers
+    document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'none');
+    
+    calculateMandelbrot();    
     drawPixelArray();
-    drawInstructions();    
+    drawInstructions();
 }
 
 document.getElementById('canvasContainer').addEventListener('mousedown', (event) => {
     isDragging = true;
     dragStart = correctForCanvasOffset([event.clientX, event.clientY]);
-    console.log(`mouse down at (${event.clientX}, ${event.clientY})`);
 });
 document.getElementById('canvasContainer').addEventListener('mouseup', (event) => {
     isDragging = false;
     // relying on 'dragEnd' to have been updated in the mousemove listener
     if (dragEnd !== null && dragStart[0] != dragEnd[0] && dragStart[1] != dragEnd[1]) {
-	console.log('dragged from ', dragStart, ' to ', dragEnd);
 	[i1, j1] = dragStart;
 	[x1, y1] = ijtoxy(i1, j1, region);
 	[i2, j2] = dragEnd;
 	[x2, y2] = ijtoxy(i2, j2, region);
 	newRegion = [x1, x2, y1, y2];
 	updateRegionAndRedraw(newRegion);
-	console.log('New Region: x: [', x1, ', ', x2, '], y: [', y1, ', ', y2, ']');
 	sndCtx.clearRect(0, 0, width, height);	
     }
-    
 });
 document.getElementById('canvasContainer').addEventListener('mousemove', (event) => {
     if (isDragging) {
@@ -254,6 +256,7 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
 	    selector = document.getElementById(`color-input-${i}`);
 	    selector.style.display = 'block';
 	}
+	document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'inline-block');
 	document.getElementById('interpolateHslLabel').style.display = 'flex';
 	document.getElementById('interpolateHslCheckbox').style.display = 'flex';
 	if (validCustomColors()) {
@@ -265,6 +268,7 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
 	    selector = document.getElementById(`color-input-${i}`);
 	    selector.style.display = 'none';
 	}
+	document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'none');
 	document.getElementById('interpolateHslLabel').style.display = 'none';
 	document.getElementById('interpolateHslCheckbox').style.display = 'none';
 	colorScheme = colorSchemes[event.target.value];
@@ -276,8 +280,6 @@ for (let i = 0; i < 2; i++) {
     document.getElementById(`color-input-${i}`).addEventListener('change', (event) => {
 	value = event.target.value;
 	customColors[i] = hexToRgb(value);
-	console.log(customColors[i]);
-	console.log(customColors);
 	if (validCustomColors()) {
 	    setCustomColorScheme();
 	    drawPixelArray();
@@ -293,3 +295,13 @@ document.getElementById('interpolateHslCheckbox').addEventListener('change', (ev
 });
 document.getElementById('upOneRegionButton').addEventListener('click', goUpOneRegion);
 document.getElementById('resetRegionButton').addEventListener('click', resetRegion);
+document.getElementById('maxIterationsField').addEventListener('change', (event) => {
+    console.log(`max iterations field updated to ${event.target.value}`);
+    value = parseInt(event.target.value);
+    if (typeof value === 'number' && value > 0) {
+	maxIterations = value;
+	console.log(`changing maxIterations to ${maxIterations}`);
+	calculateMandelbrot();
+	drawPixelArray();
+    }
+});
