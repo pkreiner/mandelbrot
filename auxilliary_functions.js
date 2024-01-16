@@ -54,3 +54,13 @@ function drawRectOutline(ctx, topLeft, lowerRight) {
     ctx.strokeWidth = 5;
     ctx.stroke();
 }
+
+// divide the range [0, top) into n pieces, returning
+// a list of pairs [start, end)
+function divideInterval(top, n) {
+    let firstN = [...Array(n).keys()];
+    let breakpoints = firstN.map(i => Math.floor(top / n) * i);
+    breakpoints = breakpoints.concat([top]);
+    let pairs = firstN.map(i => [breakpoints[i], breakpoints[i + 1]]);
+    return pairs;
+}

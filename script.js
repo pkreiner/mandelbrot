@@ -37,6 +37,8 @@ let colorScheme = blackToWhite;
 let interpolateInHsl = false;
 let maxIterations = 200;
 let optionsHidden = false;
+let usingWebWorkers = true;
+let numWebWorkers = navigator.hardwareConcurrency;
 
 function setPixel(imageData, x, y, r, g, b, a) {
     var index = (x + y * width) * 4;
@@ -81,28 +83,68 @@ function ijtoxy(i, j, region) {
 region = [xMin, xMax, yMin, yMax];
 regions = [region];
 pixelArray = new Float64Array(totalPixels);
-function calculateMandelbrot() {
-    time = performance.now()
+function calculateAndDrawPixelArray() {
     // This function populates the 'pixelArray' with values in [0, 1).
     // 0 means inside the mandelbrot set, 1 means outside.
-    for (let i = 0; i < width; i++) {
-	for (let j = 0; j < height; j++) {
-	    [x, y] = ijtoxy(i, j, region);
-	    let [cx, cy] = [x, y];
-	    k = 0;
-	    do {
-		x2 = x**2;
-		y2 = y**2;
-		newX = x2 - y2 + cx;
-		newY = (2 * x * y) + cy;
-		[x, y] = [newX, newY]
-		k += 1;
-	    } while (k < maxIterations - 1 && x2 + y2 < 4)
-	    u = 1 - (k / maxIterations);
-	    pixelArray[i + j * width] = u;
+    if (usingWebWorkers) {
+	let time = performance.now();
+	let workersFinished = new Array(numWebWorkers).fill(false);
+	let intervals = divideInterval(height, numWebWorkers);
+	console.log(`using intervals: ${intervals}`);
+	for (let k = 0; k < numWebWorkers; k++) {
+	    let startHeight = intervals[k][0];
+	    let endHeight = intervals[k][1];
+	    data = {
+		'region': region,
+		'maxIterations': maxIterations,
+		'width': width,
+		'height': height,
+		'startHeight': startHeight,
+		'endHeight': endHeight
+	    }
+	    const worker = new Worker('worker.js');
+	    worker.postMessage(data);
+	    worker.onmessage = function(event) {
+		const result = event.data;
+		console.log(`received message from worker #${k}`);
+		for (let j = startHeight; j < endHeight; j++) {
+		    // console.log(`writing line ${j} of pixelArray`);
+		    for (let i = 0; i < width; i++) {
+			index = i + j * width;
+			pixelArray[index] = result[index];
+		    }
+		}
+		workersFinished[k] = true;
+		if (workersFinished.every(bool => bool)) {
+		    drawPixelArray();
+		    console.log(
+			`mandelbrot calculation with workers finished in ms: ${performance.now() - time}`);
+		    worker.terminate();
+		}
+	    }
 	}
+    } else {
+	time = performance.now();
+	for (let j = 0; j < height; j++) {
+	    for (let i = 0; i < width; i++) {
+		[x, y] = ijtoxy(i, j, region);
+		let [cx, cy] = [x, y];
+		k = 0;
+		do {
+		    x2 = x**2;
+		    y2 = y**2;
+		    newX = x2 - y2 + cx;
+		    newY = (2 * x * y) + cy;
+		    [x, y] = [newX, newY]
+		    k += 1;
+		} while (k < maxIterations - 1 && x2 + y2 < 4)
+		u = 1 - (k / maxIterations);
+		pixelArray[i + j * width] = u;
+	    }
+	}
+	console.log(`mandelbrot calculation time in ms: ${performance.now() - time}`);
+	drawPixelArray();
     }
-    console.log(`mandelbrot calculation time in ms: ${performance.now() - time}`);
 }
 
 function drawPixelArray() {
@@ -142,24 +184,21 @@ function drawPixelArray() {
 function updateRegionAndRedraw(newRegion) {
     regions = regions.concat([newRegion]);
     region = newRegion;
-    calculateMandelbrot();
-    drawPixelArray();
+    calculateAndDrawPixelArray();
 }
 
 function goUpOneRegion() {
     if (regions.length > 1) {
 	regions = regions.slice(0, -1);
 	region = regions[regions.length - 1];
-	calculateMandelbrot();
-	drawPixelArray();
+	calculateAndDrawPixelArray();
     }
 }
 
 function resetRegion() {
     region = regions[0];
     regions = [region];
-    calculateMandelbrot();
-    drawPixelArray();
+    calculateAndDrawPixelArray();
 }
 
 // Turns an (i, j) pixel coordinate pair relative to the viewport,
@@ -189,8 +228,7 @@ window.onload = function() {
     // hide the extra divs that coloris puts in the DOM for the custom color pickers
     document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'none');
     
-    calculateMandelbrot();    
-    drawPixelArray();
+    calculateAndDrawPixelArray();    
     drawInstructions();
 }
 
@@ -302,8 +340,7 @@ document.getElementById('maxIterationsField').addEventListener('change', (event)
     if (typeof value === 'number' && value > 0) {
 	maxIterations = value;
 	console.log(`changing maxIterations to ${maxIterations}`);
-	calculateMandelbrot();
-	drawPixelArray();
+	calculateAndDrawPixelArray();
     }
 });
 document.getElementById('toggleOptionsHiddenButton').addEventListener('click', (event) => {
