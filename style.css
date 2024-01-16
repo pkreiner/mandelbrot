@@ -29,7 +29,6 @@ canvas {
 
 . optionsTopBar {
     display: flex;
-    /* justify-content: space-between;  */
 } 
 
 /* This button is technically at the same level as the two panes,
@@ -41,7 +40,7 @@ but will be fixed to the top-right corner of its parent, the pageContainer */
 }
 
 /* Add spacing between visible rows of the options pane */
-.optionsContainer > *, .optionsTopBar {
+.optionsContainer > * {
     margin-bottom: 10px;
 }
 
