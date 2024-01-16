@@ -350,8 +350,8 @@ document.getElementById('maxIterationsField').addEventListener('change', (event)
 });
 document.getElementById('toggleOptionsHiddenButton').addEventListener('click', (event) => {
     optionsHidden = !optionsHidden;
-    let optionsContainer = document.querySelector('.optionsPane');
-    optionsContainer.classList.toggle('hidden');
+    let optionsPane = document.querySelector('.options-pane');
+    optionsPane.classList.toggle('hidden');
     if (optionsHidden) {
 	event.target.textContent = 'Show options';
     } else {
