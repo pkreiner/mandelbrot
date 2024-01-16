@@ -1,3 +1,4 @@
+/* Make it so the panes (canvas, options) will flow horizontally */
 .pageContainer {
     display: flex;
     align-items: start;
@@ -5,19 +6,20 @@
 
 #canvasContainer {
     position: relative;
-    min-width: 800px;
+    min-width: 800px; /* Never collapse canvas */
     width: 800px;
     height: 800px;
 }
-
+/* Absolute positioning within canvasContainer, to line up the two overlaid canvases */
 canvas {
     position: absolute;
     left: 0;
     top: 0;
 }
 
-.controls {
+.optionsPane {
     font: 16px Arial;
+    position: relative;
     display: flex;
     flex-direction: column;
     padding-left: 10px;
@@ -25,22 +27,32 @@ canvas {
     margin-left: 20px;
 }
 
-.controls > * {
+. optionsTopBar {
+    display: flex;
+    /* justify-content: space-between;  */
+} 
+
+/* This button is technically at the same level as the two panes,
+but will be fixed to the top-right corner of its parent, the pageContainer */
+#toggleOptionsHiddenButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+/* Add spacing between visible rows of the options pane */
+.optionsContainer > *, .optionsTopBar {
     margin-bottom: 10px;
 }
 
-.controls label {
+/* Generally, flow input labels to the right of their inputs */
+.optionsPane label, .optionsPane .dropdownWithLabel {
     display: flex;
     align-items: center;
-}
-
-.controls input {
-    margin-right: 10px;
-}
-
-.controls .dropdownContainer {
-    display: flex;
-    align-items: bottom;
     gap: 15px;
+}
+
+.hidden {
+    display: none;
 }
 

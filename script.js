@@ -36,6 +36,7 @@ let normalizeColors = true;
 let colorScheme = blackToWhite;
 let interpolateInHsl = false;
 let maxIterations = 200;
+let optionsHidden = false;
 
 function setPixel(imageData, x, y, r, g, b, a) {
     var index = (x + y * width) * 4;
@@ -304,4 +305,15 @@ document.getElementById('maxIterationsField').addEventListener('change', (event)
 	calculateMandelbrot();
 	drawPixelArray();
     }
+});
+document.getElementById('toggleOptionsHiddenButton').addEventListener('click', (event) => {
+    optionsHidden = !optionsHidden;
+    let optionsContainer = document.querySelector('.optionsPane');
+    optionsContainer.classList.toggle('hidden');
+    if (optionsHidden) {
+	event.target.textContent = 'Show options';
+    } else {
+	event.target.textContent = 'Hide options';
+    }
+    console.log(`changing optionsHidden to ${optionsHidden}`);
 });
