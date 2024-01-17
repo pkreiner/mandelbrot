@@ -165,6 +165,9 @@ function drawPixelArray() {
 	drawInstructions();
 	isFirstDraw = false;
     }
+    console.log(`region: ${region}`);
+    console.log(`window side length: ${region[1] - region[0]}`);
+    console.log(`log10(window side length: ${Math.log10(region[3] - region[2])}`);
 }
 
 function updateRegionAndRedraw(newRegion) {
