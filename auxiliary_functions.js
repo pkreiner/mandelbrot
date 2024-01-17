@@ -1,4 +1,4 @@
-function hslToRgb(hsl) {
+export function hslToRgb(hsl) {
     [h, s, l] = hsl;
     s /= 100;
     l /= 100;
@@ -9,7 +9,7 @@ function hslToRgb(hsl) {
     return [255 * f(0), 255 * f(8), 255 * f(4)];
 }
 
-function rgbToHsl(rgb) {
+export function rgbToHsl(rgb) {
     [r, g, b] = rgb;
     r /= 255;
     g /= 255;
@@ -30,18 +30,18 @@ function rgbToHsl(rgb) {
     ];
 };
 
-function hexToRgb(hex) {
+export function hexToRgb(hex) {
     let r = parseInt(hex.substring(1, 3), 16);
     let g = parseInt(hex.substring(3, 5), 16);
     let b = parseInt(hex.substring(5, 7), 16);
     return [r, g, b];
 }
 
-function zipWith(f, arr1, arr2) {
+export function zipWith(f, arr1, arr2) {
     return arr1.map((element, index) => f(element, arr2[index]));
 }
 
-function drawRectOutline(ctx, topLeft, lowerRight) {
+export function drawRectOutline(ctx, topLeft, lowerRight) {
     [x1, y1] = topLeft;
     [x2, y2] = lowerRight;
     ctx.beginPath();
@@ -57,10 +57,29 @@ function drawRectOutline(ctx, topLeft, lowerRight) {
 
 // divide the range [0, top) into n pieces, returning
 // a list of pairs [start, end)
-function divideInterval(top, n) {
+export function divideInterval(top, n) {
     let firstN = [...Array(n).keys()];
     let breakpoints = firstN.map(i => Math.floor(top / n) * i);
     breakpoints = breakpoints.concat([top]);
     let pairs = firstN.map(i => [breakpoints[i], breakpoints[i + 1]]);
     return pairs;
+}
+
+// Turns a u in [0, 1] to a color between color1 and color2
+export function interpolate(color1, color2, u) {
+    return zipWith((c1, c2) => Math.floor((1 - u) * c1 + u * c2), color1, color2);
+}
+
+export function interpolatePath(colors, u) {
+    n = colors.length - 1;
+    k = Math.floor((u * n) % n);
+    [prevColor, nextColor] = [colors[k], colors[k+1]];
+    v = (u - (k / n)) * n;
+    return interpolate(prevColor, nextColor, v);
+}
+
+export function interpolatePathHsl(rgbColors, u) {
+    // Accepts and returns rgb colors, but interpolates in hsl space
+    hslColors = rgbColors.map(rgbToHsl);
+    return hslToRgb(interpolatePath(hslColors, u));
 }

@@ -1,3 +1,7 @@
+import { hslToRgb, rgbToHsl, hexToRgb, zipWith, drawRectOutline, divideInterval,
+	 interpolate, interpolatePath, interpolatePathHsl
+} from './auxiliary_functions.js'
+
 const mainCanvas = document.getElementById('mandelbrotCanvas');
 const mainCtx = mainCanvas.getContext('2d');
 const secondCanvas = document.getElementById('rectangleCanvas');
@@ -7,8 +11,6 @@ const width = mainImageData.width;
 const height = mainImageData.height;
 const totalPixels = width * height;
 const sndImageData = sndCtx.createImageData(width, height);
-
-
 
 const black = [0, 0, 0]
 const white = [255, 255, 255]
@@ -42,31 +44,18 @@ let numWebWorkers = navigator.hardwareConcurrency;
 
 let isFirstDraw = true;
 
-function setPixel(imageData, x, y, r, g, b, a) {
-    var index = (x + y * width) * 4;
+let [xMin, xMax] = [-2.5, 0.5];
+let [yMin, yMax] = [-1.5, 1.5];
+let region = [xMin, xMax, yMin, yMax];
+let regions = [region];
+let pixelArray = new Float64Array(totalPixels);
+
+function setPixel(imageData, i, j, r, g, b, a) {
+    let index = (i + j * width) * 4;
     imageData.data[index+0] = r;
     imageData.data[index+1] = g;
     imageData.data[index+2] = b;
     imageData.data[index+3] = a;
-}
-
-// Turns a u in [0, 1] to a color between color1 and color2
-function interpolate(color1, color2, u) {
-    return zipWith((c1, c2) => Math.floor((1 - u) * c1 + u * c2), color1, color2);
-}
-
-function interpolatePath(colors, u) {
-    n = colors.length - 1;
-    k = Math.floor((u * n) % n);
-    [prevColor, nextColor] = [colors[k], colors[k+1]];
-    v = (u - (k / n)) * n;
-    return interpolate(prevColor, nextColor, v);
-}
-
-function interpolatePathHsl(rgbColors, u) {
-    // Accepts and returns rgb colors, but interpolates in hsl space
-    hslColors = rgbColors.map(rgbToHsl);
-    return hslToRgb(interpolatePath(hslColors, u));
 }
 
 function ijtoxy(i, j, region) {
@@ -80,14 +69,7 @@ function ijtoxy(i, j, region) {
     return [x, y];
 }
 
-[xMin, xMax] = [-2.5, 0.5];
-[yMin, yMax] = [-1.5, 1.5];
-region = [xMin, xMax, yMin, yMax];
-regions = [region];
-pixelArray = new Float64Array(totalPixels);
 function calculateAndDrawPixelArray() {
-    // This function populates the 'pixelArray' with values in [0, 1).
-    // 0 means inside the mandelbrot set, 1 means outside.
     if (usingWebWorkers) {
 	let time = performance.now();
 	let workersFinished = new Array(numWebWorkers).fill(false);
@@ -96,7 +78,7 @@ function calculateAndDrawPixelArray() {
 	for (let k = 0; k < numWebWorkers; k++) {
 	    let startHeight = intervals[k][0];
 	    let endHeight = intervals[k][1];
-	    data = {
+	    let data = {
 		'region': region,
 		'maxIterations': maxIterations,
 		'width': width,
@@ -112,7 +94,7 @@ function calculateAndDrawPixelArray() {
 		for (let j = startHeight; j < endHeight; j++) {
 		    // console.log(`writing line ${j} of pixelArray`);
 		    for (let i = 0; i < width; i++) {
-			index = i + j * width;
+			let index = i + j * width;
 			pixelArray[index] = result[index];
 		    }
 		}
