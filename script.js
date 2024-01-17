@@ -65,6 +65,11 @@ let dragStart = null;
 let dragEnd = null;
 
 
+// More constants
+const webWorkers = Array(numWebWorkers).fill().map(() =>
+    new Worker('worker.js', { type : 'module' }));
+
+
 function calculateAndDrawPixelArray() {
     if (usingWebWorkers) {
 	let time = performance.now();
@@ -82,7 +87,7 @@ function calculateAndDrawPixelArray() {
 		'startHeight': startHeight,
 		'endHeight': endHeight
 	    }
-	    const worker = new Worker('worker.js', { type : 'module' });
+	    const worker = webWorkers[k];
 	    worker.postMessage(data);
 	    worker.onmessage = function(event) {
 		const result = event.data;
@@ -99,7 +104,6 @@ function calculateAndDrawPixelArray() {
 		    drawPixelArray();
 		    console.log(
 			`mandelbrot calculation with workers finished in ms: ${performance.now() - time}`);
-		    worker.terminate();
 		}
 	    }
 	}
