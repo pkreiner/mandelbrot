@@ -108,7 +108,7 @@ function calculateAndDrawPixelArray() {
 	    }
 	}
     } else {
-	time = performance.now();
+	let time = performance.now();
 	for (let j = 0; j < height; j++) {
 	    for (let i = 0; i < width; i++) {
 		[x, y] = ijtoxy(i, j, region, width, height);
@@ -271,11 +271,10 @@ document.getElementById('normalizeColorsCheckbox').addEventListener('change', (e
 });
 
 document.getElementById('colorSchemeSelector').addEventListener('change', (event) => {
-    value = event.target.value;
+    let value = event.target.value;
     if (value == 'custom') {
 	for (let i=0; i < numCustomColors; i++) {
-	    selector = document.getElementById(`color-input-${i}`);
-	    selector.style.display = 'block';
+	    document.getElementById(`color-input-${i}`).style.display = 'block';
 	}
 	document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'inline-block');
 	document.getElementById('interpolateHslLabel').style.display = 'flex';
@@ -286,8 +285,7 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
 	}
     } else {
 	for (let i=0; i < numCustomColors; i++) {
-	    selector = document.getElementById(`color-input-${i}`);
-	    selector.style.display = 'none';
+	    document.getElementById(`color-input-${i}`).style.display = 'none';
 	}
 	document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'none');
 	document.getElementById('interpolateHslLabel').style.display = 'none';
@@ -299,7 +297,7 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
 // Put event listeners on the starting two custom color selectors
 for (let i = 0; i < 2; i++) {
     document.getElementById(`color-input-${i}`).addEventListener('change', (event) => {
-	value = event.target.value;
+	let value = event.target.value;
 	customColors[i] = hexToRgb(value);
 	if (validCustomColors()) {
 	    setCustomColorScheme();
@@ -318,7 +316,7 @@ document.getElementById('upOneRegionButton').addEventListener('click', goUpOneRe
 document.getElementById('resetRegionButton').addEventListener('click', resetRegion);
 document.getElementById('maxIterationsField').addEventListener('change', (event) => {
     console.log(`max iterations field updated to ${event.target.value}`);
-    value = parseInt(event.target.value);
+    let value = parseInt(event.target.value);
     if (typeof value === 'number' && value > 0) {
 	maxIterations = value;
 	console.log(`changing maxIterations to ${maxIterations}`);
