@@ -29,9 +29,11 @@ const hslTeal = [180, 100, 50];
 
 const tealToWhite = (u) => interpolate(teal, white, u);
 const blackToWhite = (u) => interpolate(black, white, u);
+const blackToWhiteToBlack = (u) => interpolatePath([black, white, black], u);
 const colorSchemes = {
     'tealToWhite' : tealToWhite,
-    'blackToWhite' : blackToWhite
+    'blackToWhite' : blackToWhite,
+    'blackToWhiteToBlack' : blackToWhiteToBlack
 }
 
 
@@ -111,7 +113,7 @@ function calculateAndDrawPixelArray() {
 	let time = performance.now();
 	for (let j = 0; j < height; j++) {
 	    for (let i = 0; i < width; i++) {
-		[x, y] = ijtoxy(i, j, region, width, height);
+		let [x, y] = ijtoxy(i, j, region, width, height);
 		let [cx, cy] = [x, y];
 		k = 0;
 		do {

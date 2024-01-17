@@ -70,12 +70,17 @@ export function interpolate(color1, color2, u) {
     return zipWith((c1, c2) => Math.floor((1 - u) * c1 + u * c2), color1, color2);
 }
 
+// Turns a u in [0, 1] to a color along the path between multiple colors
 export function interpolatePath(colors, u) {
-    let n = colors.length - 1;
-    let k = Math.floor((u * n) % n);
-    let [prevColor, nextColor] = [colors[k], colors[k+1]];
-    let v = (u - (k / n)) * n;
-    return interpolate(prevColor, nextColor, v);
+    if (u == 1) {
+	return colors[colors.length - 1];
+    } else {
+	let n = colors.length - 1;
+	let k = Math.floor((u * n) % n);
+	let [prevColor, nextColor] = [colors[k], colors[k+1]];
+	let v = (u - (k / n)) * n;
+	return interpolate(prevColor, nextColor, v);
+    }
 }
 
 export function interpolatePathHsl(rgbColors, u) {
