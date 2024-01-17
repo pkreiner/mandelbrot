@@ -1,7 +1,9 @@
 import { hslToRgb, rgbToHsl, hexToRgb, zipWith, drawRectOutline, divideInterval,
-	 interpolate, interpolatePath, interpolatePathHsl
+	 interpolate, interpolatePath, interpolatePathHsl, setPixel, ijtoxy
 } from './auxiliary_functions.js'
 
+
+// Constants
 const mainCanvas = document.getElementById('mandelbrotCanvas');
 const mainCtx = mainCanvas.getContext('2d');
 const secondCanvas = document.getElementById('rectangleCanvas');
@@ -27,47 +29,41 @@ const hslTeal = [180, 100, 50];
 
 const tealToWhite = (u) => interpolate(teal, white, u);
 const blackToWhite = (u) => interpolate(black, white, u);
-
 const colorSchemes = {
     'tealToWhite' : tealToWhite,
     'blackToWhite' : blackToWhite
 }
 
-// Options
+
+// User-Settable Options
 let normalizeColors = true;
 let colorScheme = blackToWhite;
+let numCustomColors = 2;
+let customColors = [undefined, undefined];
 let interpolateInHsl = false;
 let maxIterations = 200;
 let optionsHidden = false;
+
+
+// Other Settings
 let usingWebWorkers = true;
 let numWebWorkers = navigator.hardwareConcurrency;
 
+
+// Internal State
 let isFirstDraw = true;
 
 let [xMin, xMax] = [-2.5, 0.5];
 let [yMin, yMax] = [-1.5, 1.5];
 let region = [xMin, xMax, yMin, yMax];
 let regions = [region];
+
 let pixelArray = new Float64Array(totalPixels);
 
-function setPixel(imageData, i, j, r, g, b, a) {
-    let index = (i + j * width) * 4;
-    imageData.data[index+0] = r;
-    imageData.data[index+1] = g;
-    imageData.data[index+2] = b;
-    imageData.data[index+3] = a;
-}
+let isDragging = false;
+let dragStart = null;
+let dragEnd = null;
 
-function ijtoxy(i, j, region) {
-    [xMin, xMax, yMin, yMax] = region;
-    xSize = xMax - xMin;
-    ySize = yMax - yMin;
-    xScaling = xSize / width;
-    yScaling = ySize / height;
-    x = i * xScaling + xMin;
-    y = j * yScaling + yMin;
-    return [x, y];
-}
 
 function calculateAndDrawPixelArray() {
     if (usingWebWorkers) {
@@ -86,7 +82,7 @@ function calculateAndDrawPixelArray() {
 		'startHeight': startHeight,
 		'endHeight': endHeight
 	    }
-	    const worker = new Worker('worker.js');
+	    const worker = new Worker('worker.js', { type : 'module' });
 	    worker.postMessage(data);
 	    worker.onmessage = function(event) {
 		const result = event.data;
@@ -111,7 +107,7 @@ function calculateAndDrawPixelArray() {
 	time = performance.now();
 	for (let j = 0; j < height; j++) {
 	    for (let i = 0; i < width; i++) {
-		[x, y] = ijtoxy(i, j, region);
+		[x, y] = ijtoxy(i, j, region, width, height);
 		let [cx, cy] = [x, y];
 		k = 0;
 		do {
@@ -132,7 +128,7 @@ function calculateAndDrawPixelArray() {
 }
 
 function drawPixelArray() {
-    // colorScheme is a function [0, 1) -> [r, g, b].
+    // calculate normalization for colors, if setting enabled
     let u_min = 1, u_max = 0, u_scaling;
     if (normalizeColors) {
 	[u_min, u_max] = [1, 0];
@@ -155,11 +151,9 @@ function drawPixelArray() {
 	    } else {
 		v = u;
 	    }
-	    if (Math.random() < 0.0001) {
-	    }
 	    let color = colorScheme(v);
 	    let [r, g, b] = color;
-	    setPixel(mainImageData, i, j, r, g, b, 255);
+	    setPixel(mainImageData, i, j, r, g, b, 255, width);
 	}
     }
     mainCtx.putImageData(mainImageData, 0, 0);
@@ -190,10 +184,10 @@ function resetRegion() {
 }
 
 // Turns an (i, j) pixel coordinate pair relative to the viewport,
-// to one relative to the canvas.
+// into one relative to the canvas.
 function correctForCanvasOffset(point) {
     let rect = mainCanvas.getBoundingClientRect();
-    [i, j] = point;
+    let [i, j] = point;
     return [Math.round(i - rect.left), Math.round(j - rect.top)];
 }
 
@@ -202,10 +196,18 @@ function drawInstructions() {
     mainCtx.fillText('(Zoom in by selecting a region)', 20, 20);
 }
 
+function setCustomColorScheme() {
+    if (interpolateInHsl) {
+	colorScheme = (u) => interpolatePathHsl(customColors, u);
+    } else {
+	colorScheme = (u) => interpolatePath(customColors, u);
+    }
+}
 
-let isDragging = false;
-let dragStart = null;
-let dragEnd = null;
+function validCustomColors() {
+    return customColors.every(element => element != undefined);
+}
+
 
 window.onload = function() {
     const normalizeColorsCheckbox = document.getElementById('normalizeColorsCheckbox');
@@ -227,20 +229,20 @@ document.getElementById('canvasContainer').addEventListener('mouseup', (event) =
     isDragging = false;
     // relying on 'dragEnd' to have been updated in the mousemove listener
     if (dragEnd !== null && dragStart[0] != dragEnd[0] && dragStart[1] != dragEnd[1]) {
-	[i1, j1] = dragStart;
-	[x1, y1] = ijtoxy(i1, j1, region);
-	[i2, j2] = dragEnd;
-	[x2, y2] = ijtoxy(i2, j2, region);
-	newRegion = [x1, x2, y1, y2];
+	let [i1, j1] = dragStart;
+	let [x1, y1] = ijtoxy(i1, j1, region, width, height);
+	let [i2, j2] = dragEnd;
+	let [x2, y2] = ijtoxy(i2, j2, region, width, height);
+	let newRegion = [x1, x2, y1, y2];
 	updateRegionAndRedraw(newRegion);
 	sndCtx.clearRect(0, 0, width, height);	
     }
 });
 document.getElementById('canvasContainer').addEventListener('mousemove', (event) => {
     if (isDragging) {
-	mousePos = correctForCanvasOffset([event.clientX, event.clientY]);
+	let mousePos = correctForCanvasOffset([event.clientX, event.clientY]);
 	// Restrict the selection region to be square, by using the shorter side of its rectangle
-	[xDelta, yDelta] = [mousePos[0] - dragStart[0], mousePos[1] - dragStart[1]];
+	let [xDelta, yDelta] = [mousePos[0] - dragStart[0], mousePos[1] - dragStart[1]];
 	if (Math.abs(xDelta) < Math.abs(yDelta)) {
 	    dragEnd = [mousePos[0], dragStart[1] + Math.sign(yDelta) * Math.abs(xDelta)];
 	} else {
@@ -261,20 +263,6 @@ document.getElementById('normalizeColorsCheckbox').addEventListener('change', (e
     }
 });
 
-function setCustomColorScheme() {
-    if (interpolateInHsl) {
-	colorScheme = (u) => interpolatePathHsl(customColors, u);
-    } else {
-	colorScheme = (u) => interpolatePath(customColors, u);
-    }
-}
-
-function validCustomColors() {
-    return customColors.every(element => element != undefined);
-}
-
-let numCustomColors = 2;
-let customColors = [undefined, undefined];
 document.getElementById('colorSchemeSelector').addEventListener('change', (event) => {
     value = event.target.value;
     if (value == 'custom') {

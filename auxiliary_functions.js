@@ -1,5 +1,5 @@
 export function hslToRgb(hsl) {
-    [h, s, l] = hsl;
+    let [h, s, l] = hsl;
     s /= 100;
     l /= 100;
     const k = n => (n + h / 30) % 12;
@@ -10,7 +10,7 @@ export function hslToRgb(hsl) {
 }
 
 export function rgbToHsl(rgb) {
-    [r, g, b] = rgb;
+    let [r, g, b] = rgb;
     r /= 255;
     g /= 255;
     b /= 255;
@@ -42,8 +42,8 @@ export function zipWith(f, arr1, arr2) {
 }
 
 export function drawRectOutline(ctx, topLeft, lowerRight) {
-    [x1, y1] = topLeft;
-    [x2, y2] = lowerRight;
+    let [x1, y1] = topLeft;
+    let [x2, y2] = lowerRight;
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x1, y2);
@@ -71,15 +71,34 @@ export function interpolate(color1, color2, u) {
 }
 
 export function interpolatePath(colors, u) {
-    n = colors.length - 1;
-    k = Math.floor((u * n) % n);
-    [prevColor, nextColor] = [colors[k], colors[k+1]];
-    v = (u - (k / n)) * n;
+    let n = colors.length - 1;
+    let k = Math.floor((u * n) % n);
+    let [prevColor, nextColor] = [colors[k], colors[k+1]];
+    let v = (u - (k / n)) * n;
     return interpolate(prevColor, nextColor, v);
 }
 
 export function interpolatePathHsl(rgbColors, u) {
     // Accepts and returns rgb colors, but interpolates in hsl space
-    hslColors = rgbColors.map(rgbToHsl);
+    let hslColors = rgbColors.map(rgbToHsl);
     return hslToRgb(interpolatePath(hslColors, u));
+}
+
+export function setPixel(imageData, i, j, r, g, b, a, width) {
+    let index = (i + j * width) * 4;
+    imageData.data[index+0] = r;
+    imageData.data[index+1] = g;
+    imageData.data[index+2] = b;
+    imageData.data[index+3] = a;
+}
+
+export function ijtoxy(i, j, region, width, height) {
+    let [xMin, xMax, yMin, yMax] = region;
+    let xSize = xMax - xMin;
+    let ySize = yMax - yMin;
+    let xScaling = xSize / width;
+    let yScaling = ySize / height;
+    let x = i * xScaling + xMin;
+    let y = j * yScaling + yMin;
+    return [x, y];
 }
