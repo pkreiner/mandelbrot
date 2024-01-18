@@ -107,3 +107,30 @@ export function ijtoxy(i, j, region, width, height) {
     let y = j * yScaling + yMin;
     return [x, y];
 }
+
+export class Timer {
+    constructor() {
+	this.timers = {};
+    }
+
+    start(name) {
+	this.timers.name = performance.now();
+    }
+
+    stop(name) {
+	console.log(`${name} ran in ${performance.now() - this.timers.name} ms`);
+	delete this.timers.name;
+    }
+}
+
+export function arraysEqual(arr1, arr2) {
+    if (arr1.length !== arr2.length) {
+        return false;
+    }
+    for (let i = 0; i < arr1.length; i++) {
+        if (arr1[i] !== arr2[i]) {
+            return false;
+        }
+    }
+    return true;
+}

@@ -45,7 +45,7 @@ canvas {
     margin-right: 0px;
 }
 
-#customColorsSelectorContainer {
+.custom-colors-selector-container {
     display: flex;
     flex-direction: column;
     border-left: 4px solid grey;

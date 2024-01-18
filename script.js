@@ -1,5 +1,6 @@
 import { hslToRgb, rgbToHsl, hexToRgb, zipWith, drawRectOutline, divideInterval,
-	 interpolate, interpolatePath, interpolatePathHsl, setPixel, ijtoxy
+	 interpolate, interpolatePath, interpolatePathHsl, setPixel, ijtoxy, Timer,
+	 arraysEqual
 } from './auxiliary_functions.js'
 
 
@@ -14,6 +15,7 @@ const height = mainImageData.height;
 const totalPixels = width * height;
 const sndImageData = sndCtx.createImageData(width, height);
 const maxCustomColors = 6; // see .color-input in index.html
+const timer = new Timer();
 
 const black = [0, 0, 0]
 const white = [255, 255, 255]
@@ -67,6 +69,8 @@ let isDragging = false;
 let dragStart = null;
 let dragEnd = null;
 
+let activeCustomColors = [];
+
 
 // More constants
 const webWorkers = Array(numWebWorkers).fill().map(() =>
@@ -75,7 +79,7 @@ const webWorkers = Array(numWebWorkers).fill().map(() =>
 
 function calculateAndDrawPixelArray() {
     if (usingWebWorkers) {
-	let time = performance.now();
+	timer.start('mandelbrot calculation');
 	let workersFinished = new Array(numWebWorkers).fill(false);
 	let intervals = divideInterval(height, numWebWorkers);
 	console.log(`using intervals: ${intervals}`);
@@ -105,13 +109,12 @@ function calculateAndDrawPixelArray() {
 		workersFinished[k] = true;
 		if (workersFinished.every(bool => bool)) {
 		    drawPixelArray();
-		    console.log(
-			`mandelbrot calculation with workers finished in ms: ${performance.now() - time}`);
+		    timer.stop('mandelbrot calculation');
 		}
 	    }
 	}
     } else {
-	let time = performance.now();
+	timer.start('mandelbrot calculation');
 	for (let j = 0; j < height; j++) {
 	    for (let i = 0; i < width; i++) {
 		let [x, y] = ijtoxy(i, j, region, width, height);
@@ -129,7 +132,7 @@ function calculateAndDrawPixelArray() {
 		pixelArray[i + j * width] = u;
 	    }
 	}
-	console.log(`mandelbrot calculation time in ms: ${performance.now() - time}`);
+	timer.stop('mandelbrot calculation');
 	drawPixelArray();
     }
 }
@@ -206,26 +209,43 @@ function drawInstructions() {
     mainCtx.fillText('(Zoom in by selecting a region)', 20, 20);
 }
 
-function setCustomColorScheme() {
+function setCustomColorScheme(colors) {
     if (interpolateInHsl) {
-	colorScheme = (u) => interpolatePathHsl(getValidCustomColors(customColors), u);
+	colorScheme = (u) => interpolatePathHsl(colors, u);
     } else {
-	colorScheme = (u) => interpolatePath(getValidCustomColors(customColors), u);
+	colorScheme = (u) => interpolatePath(colors, u);
     }
 }
 
-function validCustomColors() {
-    return getValidCustomColors().length >= 2;
-}
-function getValidCustomColors() {
-    // find the longest defined prefix of the list of custom colors
+function maybeUpdateActiveCustomColors() {
+    const prevActiveCustomColors = activeCustomColors;
     let colors = [];
     for (let i = 0; i < numCustomColors && customColors[i] != undefined; i++) {
 	colors = colors.concat([customColors[i]]);
     }
-    return colors;
+    if (colors.length >= 2 && !arraysEqual(colors, prevActiveCustomColors)) {
+	activeCustomColors = colors;
+	setCustomColorScheme(activeCustomColors);
+	drawPixelArray();
+    }
 }
 
+function updateNumberOfCustomColors(n) {
+    if (n >= 2 && n <= maxCustomColors) {
+	numCustomColors = n;
+	for (let i = 0; i < maxCustomColors; i++) {
+	    let colorPicker = document.getElementById(`color-input-${i}`).parentElement;
+	    if (i < n) {
+		colorPicker.classList.remove('hidden');
+	    } else {
+		colorPicker.classList.add('hidden');
+	    }
+	}
+	document.getElementById('removeCustomColorButton').disabled = (n == 2) ? true : false;
+	document.getElementById('addCustomColorButton').disabled = (n == maxCustomColors) ? true : false;
+	maybeUpdateActiveCustomColors();
+    }
+}
 
 window.onload = function() {
     document.getElementById('normalizeColorsCheckbox').checked = normalizeColors;
@@ -285,18 +305,15 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
     let value = event.target.value;
     if (value == 'custom') {
 	for (let i=0; i < numCustomColors; i++) {
-	    document.getElementById('customColorsSelectorContainer').style.display = 'flex';
+	    document.querySelector('.custom-colors-selector-container').style.display = 'flex';
 	}
 	document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'inline-block');
 	document.getElementById('interpolateHslLabel').style.display = 'flex';
 	document.getElementById('interpolateHslCheckbox').style.display = 'flex';
-	if (validCustomColors()) {
-	    setCustomColorScheme();
-	    drawPixelArray();
-	}
+	maybeUpdateActiveCustomColors();
     } else {
 	for (let i=0; i < numCustomColors; i++) {
-	    document.getElementById('customColorsSelectorContainer').style.display = 'none';
+	    document.querySelector('.custom-colors-selector-container').style.display = 'none';
 	}
 	document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'none');
 	document.getElementById('interpolateHslLabel').style.display = 'none';
@@ -305,36 +322,13 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
 	drawPixelArray();
     }
 });
-// Put event listeners on the starting two custom color selectors
+
 for (let i = 0; i < maxCustomColors; i++) {
     document.getElementById(`color-input-${i}`).addEventListener('change', (event) => {
 	let value = event.target.value;
 	customColors[i] = hexToRgb(value);
-	if (validCustomColors()) {
-	    setCustomColorScheme();
-	    drawPixelArray();
-	}
+	maybeUpdateActiveCustomColors();
     });
-}
-
-function updateNumberOfCustomColors(n) {
-    if (n >= 2 && n <= maxCustomColors) {
-	numCustomColors = n;
-	for (let i = 0; i < maxCustomColors; i++) {
-	    let colorPicker = document.getElementById(`color-input-${i}`).parentElement;
-	    if (i < n) {
-		colorPicker.classList.remove('hidden');
-	    } else {
-		colorPicker.classList.add('hidden');
-	    }
-	}
-	document.getElementById('removeCustomColorButton').disabled = (n == 2) ? true : false;
-	document.getElementById('addCustomColorButton').disabled = (n == maxCustomColors) ? true : false;
-	if (validCustomColors()) {
-	    setCustomColorScheme();
-	    drawPixelArray();
-	}
-    }
 }
 
 document.getElementById('addCustomColorButton').addEventListener('click', () => {
@@ -345,10 +339,7 @@ document.getElementById('removeCustomColorButton').addEventListener('click', () 
 });
 document.getElementById('interpolateHslCheckbox').addEventListener('change', (event) => {
     interpolateInHsl = event.target.checked;
-    if (validCustomColors()) {
-	setCustomColorScheme();
-	drawPixelArray();
-    }
+    maybeUpdateActiveCustomColors();
 });
 document.getElementById('upOneRegionButton').addEventListener('click', goUpOneRegion);
 document.getElementById('resetRegionButton').addEventListener('click', resetRegion);
