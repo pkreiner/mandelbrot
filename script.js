@@ -13,6 +13,7 @@ const width = mainImageData.width;
 const height = mainImageData.height;
 const totalPixels = width * height;
 const sndImageData = sndCtx.createImageData(width, height);
+const maxCustomColors = 6; // see .color-input in index.html
 
 const black = [0, 0, 0]
 const white = [255, 255, 255]
@@ -41,7 +42,7 @@ const colorSchemes = {
 let normalizeColors = true;
 let colorScheme = blackToWhite;
 let numCustomColors = 2;
-let customColors = [undefined, undefined];
+let customColors = Array(maxCustomColors).fill(undefined);
 let interpolateInHsl = false;
 let maxIterations = 200;
 let optionsHidden = false;
@@ -207,20 +208,33 @@ function drawInstructions() {
 
 function setCustomColorScheme() {
     if (interpolateInHsl) {
-	colorScheme = (u) => interpolatePathHsl(customColors, u);
+	colorScheme = (u) => interpolatePathHsl(getValidCustomColors(customColors), u);
     } else {
-	colorScheme = (u) => interpolatePath(customColors, u);
+	colorScheme = (u) => interpolatePath(getValidCustomColors(customColors), u);
     }
 }
 
 function validCustomColors() {
-    return customColors.every(element => element != undefined);
+    return getValidCustomColors().length >= 2;
+}
+function getValidCustomColors() {
+    // find the longest defined prefix of the list of custom colors
+    let colors = [];
+    for (let i = 0; i < numCustomColors && customColors[i] != undefined; i++) {
+	colors = colors.concat([customColors[i]]);
+    }
+    return colors;
 }
 
 
 window.onload = function() {
     document.getElementById('normalizeColorsCheckbox').checked = normalizeColors;
     document.getElementById('maxIterationsField').value = maxIterations;
+
+    // hide all but the first two custom color fields to start with
+    for (let i = 2; i < maxCustomColors; i++) {
+	document.getElementById(`color-input-${i}`).parentElement.classList.add('hidden');
+    }
     
     calculateAndDrawPixelArray();    
 }
@@ -271,7 +285,7 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
     let value = event.target.value;
     if (value == 'custom') {
 	for (let i=0; i < numCustomColors; i++) {
-	    document.querySelector(`.custom-colors-selector-container`).style.display = 'flex';
+	    document.getElementById('customColorsSelectorContainer').style.display = 'flex';
 	}
 	document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'inline-block');
 	document.getElementById('interpolateHslLabel').style.display = 'flex';
@@ -282,7 +296,7 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
 	}
     } else {
 	for (let i=0; i < numCustomColors; i++) {
-	    document.querySelector(`.custom-colors-selector-container`).style.display = 'none';
+	    document.getElementById('customColorsSelectorContainer').style.display = 'none';
 	}
 	document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'none');
 	document.getElementById('interpolateHslLabel').style.display = 'none';
@@ -292,7 +306,7 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
     }
 });
 // Put event listeners on the starting two custom color selectors
-for (let i = 0; i < 2; i++) {
+for (let i = 0; i < maxCustomColors; i++) {
     document.getElementById(`color-input-${i}`).addEventListener('change', (event) => {
 	let value = event.target.value;
 	customColors[i] = hexToRgb(value);
@@ -302,6 +316,33 @@ for (let i = 0; i < 2; i++) {
 	}
     });
 }
+
+function updateNumberOfCustomColors(n) {
+    if (n >= 2 && n <= maxCustomColors) {
+	numCustomColors = n;
+	for (let i = 0; i < maxCustomColors; i++) {
+	    let colorPicker = document.getElementById(`color-input-${i}`).parentElement;
+	    if (i < n) {
+		colorPicker.classList.remove('hidden');
+	    } else {
+		colorPicker.classList.add('hidden');
+	    }
+	}
+	document.getElementById('removeCustomColorButton').disabled = (n == 2) ? true : false;
+	document.getElementById('addCustomColorButton').disabled = (n == maxCustomColors) ? true : false;
+	if (validCustomColors()) {
+	    setCustomColorScheme();
+	    drawPixelArray();
+	}
+    }
+}
+
+document.getElementById('addCustomColorButton').addEventListener('click', () => {
+    updateNumberOfCustomColors(numCustomColors + 1);
+});
+document.getElementById('removeCustomColorButton').addEventListener('click', () => {
+    updateNumberOfCustomColors(numCustomColors - 1);
+});
 document.getElementById('interpolateHslCheckbox').addEventListener('change', (event) => {
     interpolateInHsl = event.target.checked;
     if (validCustomColors()) {
