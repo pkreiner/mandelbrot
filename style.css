@@ -1,15 +1,16 @@
-/* Make it so the panes (canvas, options) will flow horizontally */
+/* Highest-level container, in which the panes (canvas, options) will flow horizontally */
 .page-container {
     display: flex;
     align-items: start;
 }
 
 #canvasContainer {
-    position: relative;
+    position: relative; /* makes this a positioning context for the canvases */
     min-width: 800px; /* Never collapse canvas */
     width: 800px;
     height: 800px;
 }
+
 /* Absolute positioning within canvasContainer, to line up the two overlaid canvases */
 canvas {
     position: absolute;
@@ -22,26 +23,15 @@ canvas {
     position: relative;
     display: flex;
     flex-direction: column;
-    padding-left: 10px;
+    padding-left: 20px;
     border-left: 2px solid black;
     margin-left: 20px;
 }
 
-. options-top-bar {
+.options-body-container {
     display: flex;
-} 
-
-/* This button is technically at the same level as the two panes,
-but will be fixed to the top-right corner of its parent, the page-container */
-#toggleOptionsHiddenButton {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-}
-
-/* Add spacing between visible rows of the options pane */
-.options-container > * {
-    margin-bottom: 10px;
+    flex-direction: column;
+    gap: 10px;
 }
 
 /* Generally, flow input labels to the right of their inputs */
@@ -51,7 +41,32 @@ but will be fixed to the top-right corner of its parent, the page-container */
     gap: 15px;
 }
 
+.custom-colors-selector-container {
+    display: flex;
+    flex-direction: column;
+    border-left: 2px solid black;
+    padding-left: 10px;
+    gap: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.options-line {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+}
+
 .hidden {
     display: none;
 }
 
+/* This button is technically at the same level as the two panes,
+but will be fixed to the top-right corner of its parent, the page-container */
+#toggleOptionsHiddenButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}

@@ -219,13 +219,8 @@ function validCustomColors() {
 
 
 window.onload = function() {
-    const normalizeColorsCheckbox = document.getElementById('normalizeColorsCheckbox');
-    normalizeColorsCheckbox.checked = normalizeColors;
-
+    document.getElementById('normalizeColorsCheckbox').checked = normalizeColors;
     document.getElementById('maxIterationsField').value = maxIterations;
-    
-    // hide the extra divs that coloris puts in the DOM for the custom color pickers
-    document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'none');
     
     calculateAndDrawPixelArray();    
 }
@@ -276,7 +271,7 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
     let value = event.target.value;
     if (value == 'custom') {
 	for (let i=0; i < numCustomColors; i++) {
-	    document.getElementById(`color-input-${i}`).style.display = 'block';
+	    document.querySelector(`.custom-colors-selector-container`).style.display = 'flex';
 	}
 	document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'inline-block');
 	document.getElementById('interpolateHslLabel').style.display = 'flex';
@@ -287,7 +282,7 @@ document.getElementById('colorSchemeSelector').addEventListener('change', (event
 	}
     } else {
 	for (let i=0; i < numCustomColors; i++) {
-	    document.getElementById(`color-input-${i}`).style.display = 'none';
+	    document.querySelector(`.custom-colors-selector-container`).style.display = 'none';
 	}
 	document.querySelectorAll('.clr-field').forEach(el => el.style.display = 'none');
 	document.getElementById('interpolateHslLabel').style.display = 'none';

@@ -12,10 +12,10 @@
 	<canvas id='rectangleCanvas' width='800' height='800'></canvas>
       </div>
       <div class='options-pane'>
-	<div class='options-top-bar'>
+	<div class='options-header'>
 	  <h3>Options</h3>
 	</div>
-	<div class='options-container'>
+	<div class='options-body-container'>
 	  <label>
 	    <input type='checkbox' id='normalizeColorsCheckbox'>
 	    Normalize coloring to current region
@@ -29,18 +29,27 @@
 	    </select>
 	    <label for='colorSchemeSelector'>Color scheme</label>
 	  </div>
-	  <input type='text' data-coloris id='color-input-0' style='display: none'>
-	  <input type='text' data-coloris id='color-input-1' style='display: none'>
-	  <label id='interpolateHslLabel' style='display: none'>
-	    <input type='checkbox' id='interpolateHslCheckbox' style='display: none'>
-	    Interpolate colors in HSL (hue, saturation, lightness) space instead of RGB
-	  </label>
+	  <div class='custom-colors-selector-container' style='display: none'>
+	    <input type='text' data-coloris id='color-input-0'>
+	    <input type='text' data-coloris id='color-input-1'>
+	    <div class='options-line'>
+	      <button id='addCustomColorButton'>More colors</button>
+	      <button id='removeCustomColorButton'>Fewer colors</button>
+	    </div>
+	    <label id='interpolateHslLabel'>
+	      <input type='checkbox' id='interpolateHslCheckbox' style='display: none'>
+	      Interpolate colors in HSL (hue, saturation, lightness) space instead of RGB
+	    </label>
+	  </div>
+	  
 	  <label>
 	    <input type='text' id='maxIterationsField'>
 	    Maximum iterations (increase to add resolution near the outside of the set).
 	  </label>
-	  <button id='upOneRegionButton'>Zoom out one jump</button>
-	  <button id='resetRegionButton'>Zoom back out to the start</button>
+	  <div class='options-line'>
+	    <button id='upOneRegionButton'>Zoom out one jump</button>
+	    <button id='resetRegionButton'>Zoom back out to the start</button>
+	  </div>
 	</div>
       </div>
       <button id='toggleOptionsHiddenButton'>Hide Options</button>
