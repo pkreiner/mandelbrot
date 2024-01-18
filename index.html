@@ -17,12 +17,6 @@
 	</div>
 	<div class='options-body-container'>
 	  <div class='options-line'>
-	    <label>
-	      <input type='checkbox' id='normalizeColorsCheckbox'>
-	      Normalize coloring to current region
-	    </label>
-	  </div>
-	  <div class='options-line'>
 	    <select id='colorSchemeSelector'>
 	      <option value='blackToWhite'>Black to White</option>
 	      <option value='tealToWhite'>Teal to White</option>
@@ -44,12 +38,19 @@
 	      <button id='addCustomColorButton'>More colors</button>
 	      <button id='removeCustomColorButton' disabled>Fewer colors</button>
 	    </div>
-	    <label id='interpolateHslLabel'>
-	      <input type='checkbox' id='interpolateHslCheckbox' style='display: none'>
-	      Interpolate colors in HSL (hue, saturation, lightness) space instead of RGB
-	    </label>
+	    <div class='options-line'>
+	      <input type='checkbox' id='interpolateHslCheckbox'>
+	      <label id='interpolateHslLabel' for='interpolateHslCheckbox'>
+		Interpolate colors in HSL (hue, saturation, lightness) space instead of RGB
+	      </label>
+	    </div>
 	  </div>
-	  
+	  <div class='options-line'>
+	    <input type='checkbox' id='normalizeColorsCheckbox'>
+	    <label for='normalizeColorsCheckbox'>
+	      Normalize coloring to current region
+	    </label>
+	  </div>	  
 	  <label>
 	    <input type='text' id='maxIterationsField'>
 	    Maximum iterations (increase to add resolution near the outside of the set).
