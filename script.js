@@ -209,7 +209,8 @@ function drawInstructions() {
     mainCtx.fillText('(Zoom in by selecting a region)', 20, 20);
 }
 
-function setCustomColorScheme(colors) {
+function setCustomColorScheme() {
+    let colors = activeCustomColors;
     if (interpolateInHsl) {
 	colorScheme = (u) => interpolatePathHsl(colors, u);
     } else {
@@ -218,6 +219,7 @@ function setCustomColorScheme(colors) {
 }
 
 function maybeUpdateActiveCustomColors() {
+    console.log('calling maybeUpdateActiveCustomColors');
     const prevActiveCustomColors = activeCustomColors;
     let colors = [];
     for (let i = 0; i < numCustomColors && customColors[i] != undefined; i++) {
@@ -225,8 +227,9 @@ function maybeUpdateActiveCustomColors() {
     }
     if (colors.length >= 2 && !arraysEqual(colors, prevActiveCustomColors)) {
 	activeCustomColors = colors;
-	setCustomColorScheme(activeCustomColors);
+	setCustomColorScheme();
 	drawPixelArray();
+	console.log('updating custom colors');
     }
 }
 
@@ -339,7 +342,8 @@ document.getElementById('removeCustomColorButton').addEventListener('click', () 
 });
 document.getElementById('interpolateHslCheckbox').addEventListener('change', (event) => {
     interpolateInHsl = event.target.checked;
-    maybeUpdateActiveCustomColors();
+    setCustomColorScheme();
+    drawPixelArray();
 });
 document.getElementById('upOneRegionButton').addEventListener('click', goUpOneRegion);
 document.getElementById('resetRegionButton').addEventListener('click', resetRegion);
