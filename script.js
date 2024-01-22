@@ -274,6 +274,9 @@ document.getElementById('canvasContainer').addEventListener('mouseup', (event) =
 	let [x1, y1] = ijtoxy(i1, j1, region, width, height);
 	let [i2, j2] = dragEnd;
 	let [x2, y2] = ijtoxy(i2, j2, region, width, height);
+	// Ensure x1 < x2 and y1 < y2
+	[x1, x2] = [Math.min(x1, x2), Math.max(x1, x2)];
+	[y1, y2] = [Math.min(y1, y2), Math.max(y1, y2)];
 	let newRegion = [x1, x2, y1, y2];
 	updateRegionAndRedraw(newRegion);
 	sndCtx.clearRect(0, 0, width, height);	
